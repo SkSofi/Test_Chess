@@ -1,0 +1,381 @@
+<!-- test.html -->
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тестування - Шахова школа для дітей</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="header">
+  <nav class="nav">
+    <a href="index.html">Привітання</a>
+    <a href="learn.html">Навчання</a>
+    <a href="practice.html">Тренування</a>
+    <a href="test.html">Тестування</a>
+  </nav>
+</header>
+<main class="content">
+  <h1>Тестування знань</h1>
+  <div class="progress-bar">
+    <div class="progress" id="progress"></div>
+  </div>
+  <div class="score" id="score"></div>
+  <form class="test-form" id="testForm">  </form>
+</main>
+
+<script>
+  // База всіх можливих питань
+  const allQuestions = [
+    // Базові правила
+    {
+      question: "Скільки фігур кожного кольору на початку гри?",
+      options: [
+        "15 фігур",
+        "16 фігур",
+        "14 фігур",
+        "18 фігур"
+      ],
+      correctAnswer: 1,
+      explanation: "На початку гри у кожного гравця є 16 фігур: 8 пішаків, 2 тури, 2 коня, 2 слона, 1 ферзь та 1 король."
+    },
+    {
+      question: "Яка головна мета шахової партії?",
+      options: [
+        "Забрати всі фігури суперника",
+        "Поставити мат королю суперника",
+        "Зібрати найбільше очок",
+        "Провести пішака у ферзі"
+      ],
+      correctAnswer: 1,
+      explanation: "Головна мета шахової партії - поставити мат королю суперника, тобто створити ситуацію, коли король під загрозою і не має можливості уникнути взяття."
+    },
+
+    // Ходи фігур
+    {
+      question: "Як ходить кінь?",
+      options: [
+        "По прямій на будь-яку кількість клітинок",
+        "Буквою 'Г' - на дві клітинки вперед і одну вбік",
+        "По діагоналі на будь-яку кількість клітинок",
+        "Тільки вперед на одну клітинку"
+      ],
+      correctAnswer: 1,
+      explanation: "Кінь ходить буквою 'Г' - на дві клітинки в одному напрямку і одну клітинку перпендикулярно."
+    },
+    {
+      question: "Яка особливість ходу коня відрізняє його від інших фігур?",
+      options: [
+        "Може ходити тільки вперед",
+        "Може перестрибувати через інші фігури",
+        "Ходить тільки по діагоналі",
+        "Може ходити на необмежену відстань"
+      ],
+      correctAnswer: 1,
+      explanation: "Кінь - єдина фігура, яка може перестрибувати через інші фігури під час свого ходу."
+    },
+    {
+      question: "Як ходить ферзь?",
+      options: [
+        "Тільки по горизонталі",
+        "Тільки по діагоналі",
+        "По горизонталі, вертикалі та діагоналі на будь-яку кількість клітинок",
+        "На одну клітинку в будь-якому напрямку"
+      ],
+      correctAnswer: 2,
+      explanation: "Ферзь може ходити по горизонталі, вертикалі та діагоналі на будь-яку кількість вільних клітинок."
+    },
+
+    // Спеціальні правила
+    {
+      question: "Що таке рокіровка?",
+      options: [
+        "Особливий хід пішака",
+        "Спеціальний хід короля і тури",
+        "Перетворення пішака у ферзя",
+        "Взяття на проході"
+      ],
+      correctAnswer: 1,
+      explanation: "Рокіровка - це особливий хід, коли король переміщується на дві клітинки вбік до тури, а тура переставляється через короля."
+    },
+    {
+      question: "За яких умов можлива рокіровка?",
+      options: [
+        "В будь-який момент гри",
+        "Тільки якщо король під шахом",
+        "Коли між королем і турою немає фігур і вони ще не ходили",
+        "Тільки в першій половині партії"
+      ],
+      correctAnswer: 2,
+      explanation: "Рокіровка можлива, коли між королем і турою немає фігур, вони ще не ходили, король не під шахом і не перетинає атаковані поля."
+    },
+
+    // Пішаки
+    {
+      question: "Що відбувається, коли пішак досягає останньої горизонталі?",
+      options: [
+        "Пішак видаляється з дошки",
+        "Пішак може перетворитися на будь-яку фігуру (крім короля)",
+        "Пішак залишається на місці",
+        "Пішак повертається на початкову позицію"
+      ],
+      correctAnswer: 1,
+      explanation: "Коли пішак досягає останньої горизонталі, він може бути перетворений на будь-яку фігуру свого кольору, крім короля."
+    },
+    {
+      question: "Як пішак б'є інші фігури?",
+      options: [
+        "Так само як ходить - прямо вперед",
+        "По діагоналі на одну клітинку вперед",
+        "В будь-якому напрямку на одну клітинку",
+        "Не може бити інші фігури"
+      ],
+      correctAnswer: 1,
+      explanation: "Пішак б'є фігури по діагоналі на одну клітинку вперед, хоча ходить прямо."
+    },
+
+    // Цінність фігур
+    {
+      question: "Яка фігура найсильніша після ферзя?",
+      options: [
+        "Король",
+        "Слон",
+        "Кінь",
+        "Тура"
+      ],
+      correctAnswer: 3,
+      explanation: "Тура є другою за силою фігурою після ферзя, оцінюється в 5 пішаків."
+    },
+    {
+      question: "Скільки пішаків за цінністю дорівнює ферзю?",
+      options: [
+        "5 пішаків",
+        "7 пішаків",
+        "9 пішаків",
+        "10 пішаків"
+      ],
+      correctAnswer: 2,
+      explanation: "Ферзь оцінюється приблизно в 9 пішаків, що робить його найсильнішою фігурою."
+    },
+
+    // Тактика
+    {
+      question: "Що таке вилка?",
+      options: [
+        "Напад на короля",
+        "Напад однією фігурою на дві або більше фігур одночасно",
+        "Захист важливої фігури",
+        "Розмін фігур"
+      ],
+      correctAnswer: 1,
+      explanation: "Вилка - це тактичний прийом, коли одна фігура нападає одночасно на дві або більше фігур суперника."
+    },
+    {
+      question: "Що таке зв'язка в шахах?",
+      options: [
+        "Особливий хід двома фігурами",
+        "Ситуація, коли фігура не може ходити, бо відкриє лінію атаки на короля",
+        "Захист короля іншими фігурами",
+        "Розташування пішаків"
+      ],
+      correctAnswer: 1,
+      explanation: "Зв'язка - це ситуація, коли фігура не може ходити, оскільки це відкриє лінію атаки на більш цінну фігуру (зазвичай короля)."
+    },
+
+    // Стратегія
+    {
+      question: "Що важливіше на початку партії?",
+      options: [
+        "Вивести вперед ферзя",
+        "Розвинути легкі фігури та зробити рокіровку",
+        "Просунути максимально вперед пішаків",
+        "Атакувати короля суперника"
+      ],
+      correctAnswer: 1,
+      explanation: "На початку партії важливо розвинути легкі фігури (коні та слони) та зробити рокіровку для захисту короля."
+    },
+    {
+      question: "Яке правило дебюту є найважливішим?",
+      options: [
+        "Атакувати якомога швидше",
+        "Не виводити ферзя занадто рано",
+        "Ходити тільки пішаками",
+        "Не робити рокіровку"
+      ],
+      correctAnswer: 1,
+      explanation: "Не рекомендується виводити ферзя занадто рано, оскільки суперник може атакувати його легкими фігурами і виграти темп."
+    },
+
+    // Ендшпіль
+    {
+      question: "Який основний принцип ендшпілю з пішаками?",
+      options: [
+        "Тримати пішаків разом",
+        "Розділяти пішаків",
+        "Не ходити пішаками",
+        "Віддати всіх пішаків"
+      ],
+      correctAnswer: 0,
+      explanation: "У пішаковому ендшпілі важливо тримати пішаків разом, щоб вони могли підтримувати один одного."
+    }
+  ];
+
+  // Функція для перемішування масиву (алгоритм Фішера-Єйтса)
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // Функція для створення форми тесту
+  function createTest() {
+    const testForm = document.getElementById('testForm');
+    const questions = shuffleArray([...allQuestions]).slice(0, 12);
+
+    questions.forEach((q, index) => {
+      const questionDiv = document.createElement('div');
+      questionDiv.className = 'question';
+      questionDiv.dataset.questionIndex = index;
+
+      questionDiv.innerHTML = `
+            <h3>Питання ${index + 1}</h3>
+            <p>${q.question}</p>
+            <div class="options">
+                ${q.options.map((option, i) => `
+                    <label class="option">
+                        <input type="radio" name="q${index}" value="${i}">
+                        ${option}
+                    </label>
+                `).join('')}
+            </div>
+            <div class="correct-answer">
+                Правильна відповідь: ${q.options[q.correctAnswer]}<br>
+                ${q.explanation}
+            </div>
+        `;
+
+      testForm.appendChild(questionDiv);
+    });
+
+    // Додаємо кнопку відправки
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.className = 'button';
+    submitButton.textContent = 'Перевірити відповіді';
+    testForm.appendChild(submitButton);
+
+    testForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      checkAnswers(questions);
+    });
+
+    return questions;
+  }
+
+  // Продовження функції checkAnswers
+  function checkAnswers(questions) {
+    const form = document.getElementById('testForm');
+    let correctAnswers = 0;
+
+    questions.forEach((q, index) => {
+      const questionDiv = form.querySelector(`[data-question-index="${index}"]`);
+      const selectedAnswer = form.querySelector(`input[name="q${index}"]:checked`);
+
+      if (selectedAnswer) {
+        const isCorrect = parseInt(selectedAnswer.value) === q.correctAnswer;
+        questionDiv.className = `question ${isCorrect ? 'correct' : 'incorrect'}`;
+        if (isCorrect) correctAnswers++;
+      } else {
+        questionDiv.className = 'question incorrect';
+      }
+    });
+
+    // Оновлення прогрес-бару
+    const progressBar = document.getElementById('progress');
+    const percentage = (correctAnswers / questions.length) * 100;
+    progressBar.style.width = `${percentage}%`;
+
+    // Оновлення рахунку
+    const scoreElement = document.getElementById('score');
+    scoreElement.textContent = `Ваш результат: ${correctAnswers} з ${questions.length} (${percentage.toFixed(1)}%)`;
+
+    // Додавання класу оцінки
+    scoreElement.className = 'score';
+    if (percentage >= 80) {
+      scoreElement.className += ' excellent';
+    } else if (percentage >= 60) {
+      scoreElement.className += ' good';
+    } else {
+      scoreElement.className += ' needs-improvement';
+    }
+
+    // Деактивація всіх радіо-кнопок після завершення
+    const allInputs = form.querySelectorAll('input[type="radio"]');
+    allInputs.forEach(input => {
+      input.disabled = true;
+    });
+
+    // Деактивація кнопки відправки
+    const submitButton = form.querySelector('.submit-button');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Тест завершено';
+
+    // Показати всі пояснення
+    const explanations = form.querySelectorAll('.correct-answer');
+    explanations.forEach(exp => {
+      exp.style.display = 'block';
+    });
+
+    // Прокрутка до початку результатів
+    scoreElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Додаткові стилі для оцінок
+  const additionalStyles = `
+    .excellent {
+        color: #28a745;
+    }
+    .good {
+        color: #ffc107;
+    }
+    .needs-improvement {
+        color: #dc3545;
+    }
+    .submit-button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+    }
+    .option {
+        display: block;
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .option:hover {
+        background-color: #f8f9fa;
+    }
+    .question {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+`;
+
+  // Додавання стилів до сторінки
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = additionalStyles;
+  document.head.appendChild(styleSheet);
+
+  // Ініціалізація тесту при завантаженні сторінки
+  document.addEventListener('DOMContentLoaded', () => {
+    createTest();
+  });
+</script>
+</body>
+</html>

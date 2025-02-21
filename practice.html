@@ -1,0 +1,258 @@
+<!-- practice.html -->
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренування - Шахова школа для дітей</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="header">
+    <nav class="nav">
+        <a href="index.html">Привітання</a>
+        <a href="learn.html">Навчання</a>
+        <a href="practice.html">Тренування</a>
+        <a href="test.html">Тестування</a>
+    </nav>
+</header>
+<main class="content">
+    <h1>Тренування: Ходи фігур</h1>
+
+    <div class="piece-selector">
+        <button onclick="selectPiece('pawn')" class="piece-button">♙</button>
+        <button onclick="selectPiece('rook')" class="piece-button">♖</button>
+        <button onclick="selectPiece('knight')" class="piece-button">♘</button>
+        <button onclick="selectPiece('bishop')" class="piece-button">♗</button>
+        <button onclick="selectPiece('queen')" class="piece-button">♕</button>
+        <button onclick="selectPiece('king')" class="piece-button">♔</button>
+    </div>
+
+    <div class="exercise-container">
+        <div class="task-description">
+            <p>Позначте всі можливі ходи фігури з поточної позиції. Клікніть на клітинки, куди фігура може походити.</p>
+        </div>
+
+        <div class="chessboard-wrapper">
+            <div class="chessboard" id="chessboard"></div>
+        </div>
+
+        <div class="controls">
+            <button class="button" onclick="checkAnswers()">Перевірити відповіді</button>
+            <button class="button" onclick="resetExercise()">Почати заново</button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+</main>
+
+<script>
+    let selectedCells = new Set();
+    let piecePosition = {row: 4, col: 4};
+    let currentPiece = 'knight';
+
+    const pieceSymbols = {
+        pawn: '♙',
+        rook: '♖',
+        knight: '♘',
+        bishop: '♗',
+        queen: '♕',
+        king: '♔'
+    };
+
+    // Функція для отримання випадкової позиції для фігури
+    function getRandomPosition(piece) {
+        let row, col;
+
+        switch(piece) {
+            case 'pawn':
+                // Пішак не може бути на першій та останній горизонталі
+                row = Math.floor(Math.random() * 6) + 1; // від 1 до 6
+                col = Math.floor(Math.random() * 8);
+                break;
+            default:
+                // Інші фігури можуть бути де завгодно
+                row = Math.floor(Math.random() * 8);
+                col = Math.floor(Math.random() * 8);
+        }
+
+        return {row, col};
+    }
+
+    // Функція для отримання можливих ходів для кожної фігури
+    function getCorrectMoves(piece, position) {
+        const moves = new Set();
+        const {row, col} = position;
+
+        switch(piece) {
+            case 'pawn':
+                // Пішак може ходити тільки вперед
+                // Перевіряємо, чи не на останній лінії
+                if (row > 0) moves.add(`${row-1},${col}`);
+                // З початкової позиції (6-та горизонталь) може ходити на дві клітинки
+                if (row === 6) moves.add(`${row-2},${col}`);
+                break;
+
+            case 'rook':
+                // Тура ходить по горизонталі та вертикалі
+                for (let i = 0; i < 8; i++) {
+                    if (i !== row) moves.add(`${i},${col}`);
+                    if (i !== col) moves.add(`${row},${i}`);
+                }
+                break;
+
+            case 'knight':
+                // Кінь ходить буквою "Г"
+                const knightMoves = [
+                    {row: -2, col: -1}, {row: -2, col: 1},
+                    {row: -1, col: -2}, {row: -1, col: 2},
+                    {row: 1, col: -2}, {row: 1, col: 2},
+                    {row: 2, col: -1}, {row: 2, col: 1}
+                ];
+
+                knightMoves.forEach(move => {
+                    const newRow = row + move.row;
+                    const newCol = col + move.col;
+                    if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                        moves.add(`${newRow},${newCol}`);
+                    }
+                });
+                break;
+
+            case 'bishop':
+                // Слон ходить по діагоналях
+                for (let i = 1; i < 8; i++) {
+                    if (row + i < 8 && col + i < 8) moves.add(`${row+i},${col+i}`);
+                    if (row + i < 8 && col - i >= 0) moves.add(`${row+i},${col-i}`);
+                    if (row - i >= 0 && col + i < 8) moves.add(`${row-i},${col+i}`);
+                    if (row - i >= 0 && col - i >= 0) moves.add(`${row-i},${col-i}`);
+                }
+                break;
+
+            case 'queen':
+                // Ферзь ходить як тура і слон разом
+                // Ходи по горизонталі та вертикалі
+                for (let i = 0; i < 8; i++) {
+                    if (i !== row) moves.add(`${i},${col}`);
+                    if (i !== col) moves.add(`${row},${i}`);
+                }
+                // Ходи по діагоналях
+                for (let i = 1; i < 8; i++) {
+                    if (row + i < 8 && col + i < 8) moves.add(`${row+i},${col+i}`);
+                    if (row + i < 8 && col - i >= 0) moves.add(`${row+i},${col-i}`);
+                    if (row - i >= 0 && col + i < 8) moves.add(`${row-i},${col+i}`);
+                    if (row - i >= 0 && col - i >= 0) moves.add(`${row-i},${col-i}`);
+                }
+                break;
+
+            case 'king':
+                // Король ходить на одну клітинку в будь-якому напрямку
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        if (i === 0 && j === 0) continue;
+                        const newRow = row + i;
+                        const newCol = col + j;
+                        if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                            moves.add(`${newRow},${newCol}`);
+                        }
+                    }
+                }
+                break;
+        }
+
+        return moves;
+    }
+
+    function createChessboard() {
+        const chessboard = document.getElementById('chessboard');
+        chessboard.innerHTML = ''; // Очищаємо дошку
+
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const cell = document.createElement('div');
+                cell.className = `cell ${(row + col) % 2 === 0 ? 'white' : 'black'}`;
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+
+                if (row === piecePosition.row && col === piecePosition.col) {
+                    cell.innerHTML = pieceSymbols[currentPiece];
+                }
+
+                cell.addEventListener('click', handleCellClick);
+                chessboard.appendChild(cell);
+            }
+        }
+    }
+
+    function selectPiece(piece) {
+        currentPiece = piece;
+        // Отримуємо нову випадкову позицію для фігури
+        piecePosition = getRandomPosition(piece);
+
+        document.querySelectorAll('.piece-button').forEach(button => {
+            button.classList.remove('active');
+            if (button.textContent === pieceSymbols[piece]) {
+                button.classList.add('active');
+            }
+        });
+        resetExercise();
+    }
+
+    function handleCellClick(e) {
+        const cell = e.target;
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+
+        // Ігноруємо клік на позиції фігури
+        if (row === piecePosition.row && col === piecePosition.col) {
+            return;
+        }
+
+        const cellKey = `${row},${col}`;
+        if (selectedCells.has(cellKey)) {
+            selectedCells.delete(cellKey);
+            cell.classList.remove('selected');
+        } else {
+            selectedCells.add(cellKey);
+            cell.classList.add('selected');
+        }
+    }
+
+    function checkAnswers() {
+        const message = document.getElementById('message');
+        const correctMoves = getCorrectMoves(currentPiece, piecePosition);
+
+        // Перевіряємо, чи всі вибрані ходи є правильними
+        const allSelectedAreCorrect = Array.from(selectedCells).every(move => correctMoves.has(move));
+
+        // Перевіряємо, чи вибрані всі правильні ходи
+        const allCorrectAreSelected = selectedCells.size === correctMoves.size;
+
+        if (allSelectedAreCorrect && allCorrectAreSelected) {
+            // Всі відповіді правильні
+            message.className = 'message success';
+            message.textContent = 'Правильно! Ви вказали всі можливі ходи фігури.';
+        } else if (allSelectedAreCorrect && !allCorrectAreSelected) {
+            // Всі вибрані ходи правильні, але вибрані не всі можливі ходи
+            message.className = 'message partial';
+            message.textContent = 'Вибрано не всі можливі варіанти';
+        } else {
+            // Є неправильні ходи
+            message.className = 'message error';
+            message.textContent = 'Неправильно. Спробуйте ще раз!';
+        }
+    }
+
+    function resetExercise() {
+        selectedCells.clear();
+        createChessboard();
+        document.getElementById('message').textContent = '';
+    }
+
+    window.onload = () => {
+        createChessboard();
+        selectPiece('knight'); // Активуємо коня за замовчуванням
+    };
+</script>
+</body>
+</html>
